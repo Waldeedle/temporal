@@ -309,8 +309,17 @@ temporal-server-debug: $(ALL_SRC)
 
 ##### Checks #####
 copyright-check:
-	@printf $(COLOR) "Check license header..."
-	@go run ./cmd/tools/copyright/licensegen.go --verifyOnly
+	@check_failed=false; \
+	current_year=$$(date +'%Y'); \
+	for file in $$(git diff --diff-filter=A --name-only origin/main HEAD | grep '\.go$$'); do \
+		if ! grep -q "Copyright (c) $$current_year Temporal Technologies Inc." "$$file"; then \
+			printf $(RED) "New file $$file does not contain copyright notice for the current year."; \
+			check_failed=true; \
+		fi; \
+	done; \
+	if [ "$$check_failed" = true ]; then \
+		printf $(RED) "Copyright check failed, aborting" && exit 1; \
+	fi
 
 copyright:
 	@printf $(COLOR) "Fix license header..."
